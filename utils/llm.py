@@ -17,20 +17,33 @@ def generate_question(path_str, start, end):
     2. 指代消解：不要在问题中提及中间节点的名字，而是用“起点+关系”的方式来指代中间节点。
     3. 逻辑嵌套：将前面的路径节点转化为对后续节点的修饰语（定语）。
     4. 答案唯一：问题的最终答案必须是【终点】，且问题中不能出现【终点】的名称。
+    5. 语言自适应（重要）：生成问题的语言必须与输入【路径】内容的语言严格保持一致。
+        - 若路径为中文，则生成中文问题。
+        - 若路径为英文，则生成英文问题。
+        - 若路径为其他语言，则生成对应语言的问题。
     
-    示例：
+    示例 1 (中文输入 -> 中文输出)：
     输入：
     - 路径：特斯拉 -(被发明)-> 马斯克 -(位于)-> 美国
     - 起点：特斯拉
     - 终点：美国
     ❌ 错误输出：特斯拉是谁发明的？这个人位于哪里？
     ✅ 正确输出：发明特斯拉的那个人目前主要位于哪个国家？
+    
+    示例 2 (英文输入 -> 英文输出)：
+    输入：
+    - 路径：Mona Lisa -(created by)-> Da Vinci -(born in)-> Italy
+    - 起点：Mona Lisa
+    - 终点：Italy
+    输出：In which country was the creator of the Mona Lisa born?
 
     现在请处理：
     输入格式：
     - 路径：[具体的关联路径]
     - 起点：[起始点]
     - 终点：[目标答案]
+    ❌ 错误输出：Who created the Mona Lisa? Where was he born?
+    ✅ 正确输出：In which country was the creator of the Mona Lisa born?
     """
 
     response = client.chat.completions.create(
