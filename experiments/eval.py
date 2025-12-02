@@ -166,4 +166,4 @@ if __name__ == "__main__":
     evaluate_model(args)
 
 # 示例：测试实验 A，使用 mix_all_kb 数据集
-# python experiments/evaluate.py -a a -d mix_all_kb -c results/a_mix_all_kb_2023xxxx/best_model.pt
+# python experiments/eval.py -a a -d mix_all_kb -c results/a_mix_all_kb_2023xxxx/best_model.pt
