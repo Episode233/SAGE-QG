@@ -14,10 +14,10 @@ def generate_question(path_str, start, end):
     The path consists of a sequence of "Node-Relation->Node" associations. For example, "A -relation1-> B -relation2-> C" indicates connecting from A to B via relation1, and then to C via relation2.
     
     **Generation Requirements:**
-    1. **Single-Sentence Question:** The question must be a single, coherent sentence. Strictly avoid splitting it into multiple sub-questions (e.g., do not use structures like "Who is...? And where was he...?").
-    2. **Coreference Resolution:** Do not mention the names of intermediate nodes in the question. Instead, refer to them using a description combining the "Start Node + Relation".
-    3. **Logical Nesting:** Convert preceding path nodes into modifiers (attributives) for subsequent nodes to form a nested query.
-    4. **Unique Answer:** The final answer to the question must be the [End Node]. The name of the [End Node] must NOT appear in the question.
+    1. Single-Sentence Question: The question must be a single, coherent sentence. Strictly avoid splitting it into multiple sub-questions (e.g., do not use structures like "Who is...? And where was he...?").
+    2. Coreference Resolution: Do not mention the names of intermediate nodes in the question. Instead, refer to them using a description combining the "Start Node + Relation".
+    3. Logical Nesting: Convert preceding path nodes into modifiers (attributives) for subsequent nodes to form a nested query.
+    4. Unique Answer: The final answer to the question must be the [End Node]. The name of the [End Node] must NOT appear in the question.
     
     **Example:**
     Input:
@@ -35,7 +35,7 @@ def generate_question(path_str, start, end):
     """
 
     response = client.chat.completions.create(
-        model="x-ai/grok-4.1-fast:free",
+        model="openai/gpt-4o-mini",
         messages=[
             {
                 "role": "system",
