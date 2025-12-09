@@ -51,11 +51,11 @@ def generate_question(path_str, start, end):
 
     return response.choices[0].message.content
 
-
-print(
-    generate_question(
-        "Xiaomi Phone -(invented)-> Lei Jun -(based in)-> China -(capital)-> Beijing",
-        "Xiaomi Phone",
-        "Beijing",
+if __name__ == "__main__":
+    print(
+        generate_question(
+            "Xiaomi Phone -(invented)-> Lei Jun -(based in)-> China -(capital)-> Beijing",
+            "Xiaomi Phone",
+            "Beijing",
+        )
     )
-)
