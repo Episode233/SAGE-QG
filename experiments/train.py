@@ -72,6 +72,9 @@ def train(args):
     if args.exp_name == 'a':
         from experiments.exp_a import ExpaModel
         model = ExpaModel(num_relations=num_relations, gnn_layers=args.gnn_layers, dropout=args.dropout)
+    elif args.exp_name == 'b':
+        from experiments.exp_b import ExpBModel
+        model = ExpBModel(num_relations=num_relations, gnn_layers=args.gnn_layers, dropout=args.dropout)
     else:
         raise ValueError(f"Unknown experiment: {args.exp_name}")
 
@@ -192,7 +195,7 @@ def train(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train EXPA Model")
-    parser.add_argument('-n', '--exp_name', type=str, default='a', help="Experiment Name")
+    parser.add_argument('-e', '--exp_name', type=str, default='a', help="Experiment Name")
     parser.add_argument('-d', '--dataset', type=str, required=True, help="Dataset name")
     parser.add_argument('--epochs', type=int, default=10)
     parser.add_argument('--batch_size', type=int, default=8)
@@ -206,4 +209,4 @@ if __name__ == "__main__":
     train(args)
 
 # 示例：训练实验 A，使用 mix_all_kb 数据集
-# python experiments/train.py -n a -d mix_all_kb --epochs 20 --batch_size 16
+# python experiments/train.py -e a -d mix_all_kb --epochs 20 --batch_size 16

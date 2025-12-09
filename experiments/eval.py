@@ -85,6 +85,9 @@ def evaluate_model(args):
     if args.exp_name == 'a':
         from experiments.exp_a import ExpaModel
         model = ExpaModel(num_relations=num_relations, gnn_layers=args.gnn_layers)
+    elif args.exp_name == 'b':
+        from experiments.exp_b import ExpBModel
+        model = ExpBModel(num_relations=num_relations, gnn_layers=args.gnn_layers)
     else:
         raise ValueError("Unknown experiment")
 
@@ -158,7 +161,7 @@ def evaluate_model(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-a', '--exp_name', type=str, default='a')
+    parser.add_argument('-e', '--exp_name', type=str, default='a')
     parser.add_argument('-d', '--dataset', type=str, required=True, help="dataset used for testing")
     parser.add_argument('-c', '--checkpoint', type=str, required=True, help="path to best_model.pt")
     parser.add_argument('--batch_size', type=int, default=16)  # 推理不占显存，可以大点
@@ -168,4 +171,4 @@ if __name__ == "__main__":
     evaluate_model(args)
 
 # 示例：测试实验 A，使用 mix_all_kb 数据集
-# python experiments/eval.py -a a -d mix_all_kb -c results/a_mix_all_kb_20251202_071154/best_model.pt
+# python experiments/eval.py -e a -d mix_all_kb -c results/a_mix_all_kb_20251205_031043/best_model.pt
