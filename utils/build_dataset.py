@@ -120,15 +120,7 @@ def build_subgraph_data(G, path_nodes, path_edges, noise_m):
 # 3. 主逻辑
 # ==========================================
 
-def process_kb_file(kb_filename, samples_per_node_attempts, noise_neighbors, target_total_samples):
-    if "_2h_" in kb_filename:
-        num_hops = 2
-    elif "_3h_" in kb_filename:
-        num_hops = 3
-    else:
-        print(f"[WARN] Skipping {kb_filename}: Cannot infer hops.")
-        return
-
+def process_kb_file(kb_filename, num_hops, samples_per_node_attempts, noise_neighbors, target_total_samples):
     print(f"\n>>> Processing {kb_filename} | Hops: {num_hops}")
 
     kb_path = os.path.join(DATA_DIR, kb_filename)
@@ -219,9 +211,15 @@ def process_kb_file(kb_filename, samples_per_node_attempts, noise_neighbors, tar
         print(f"    JSON {split_name} saved to: {json_save_path}")
 
 
-# process_kb_file('pq_2h_kb.txt', 50, 5, 3000)
-# process_kb_file('pq_3h_kb.txt', 50, 5, 3000)
-# process_kb_file('pql_2h_kb.txt', 50, 5, 3000)
-# process_kb_file('pql_3h_kb.txt', 50, 5, 3000)
-# process_kb_file('WC2014_3h_kb.txt', 2, 8, 3000)
-process_kb_file('FB15k-237_3h_kb.txt', 2, 8, 3000)
+# process_kb_file('PQ_kb.txt', 2, 2, 5, 3000)
+# process_kb_file('PQ_kb.txt', 3, 5, 3, 3000)
+# process_kb_file('PQL_kb.txt', 2, 2, 5, 3000)
+# process_kb_file('PQL_kb.txt', 3, 5, 3, 3000)
+# process_kb_file('WC2014_kb.txt', 2, 2, 5, 3000)
+# process_kb_file('WC2014_kb.txt', 3, 5, 3, 3000)
+# process_kb_file('FB15k-237_kb.txt', 2, 2, 5, 3000)
+# process_kb_file('FB15k-237_kb.txt', 3, 5, 3, 3000)
+# process_kb_file('WN18RR_kb.txt', 2, 2, 5, 3000)
+# process_kb_file('WN18RR_kb.txt', 3, 5, 3, 3000)
+# process_kb_file('YAGO3-10_kb.txt', 2, 2, 5, 3000)
+# process_kb_file('YAGO3-10_kb.txt', 3, 5, 3, 3000)
