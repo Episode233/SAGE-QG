@@ -40,8 +40,8 @@ def train(args):
     # 2. 准备数据
     # ==========================================
     print(">>> Loading Data...")
-    processed_dir = os.path.join(project_root, "datasets", "processed")
-    data_path = os.path.join(processed_dir, args.dataset)
+    mixed_dir = os.path.join(project_root, "datasets", "mixed")
+    data_path = os.path.join(mixed_dir, args.dataset)
     vocab_filename = f"{args.dataset}_relations.json"
     vocab_path = os.path.join(data_path, vocab_filename)
 
