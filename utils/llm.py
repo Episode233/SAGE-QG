@@ -1,11 +1,14 @@
 import json
 from openai import OpenAI
 
+base_url='https://openrouter.ai/api/v1'
+model='openai/gpt-4o-mini'
+api_key='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'
 
 def generate_question(path_str, start, end):
     client = OpenAI(
-        base_url="https://openrouter.ai/api/v1",
-        api_key="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",
+        base_url=base_url,
+        api_key=api_key,
     )
 
     prompt = """
@@ -36,7 +39,7 @@ def generate_question(path_str, start, end):
     """
 
     response = client.chat.completions.create(
-        model="openai/gpt-4o-mini",
+        model=model,
         messages=[
             {
                 "role": "system",
@@ -68,8 +71,8 @@ def evaluate_question(triples_str, start_node, end_node, ref_question, gen_quest
         int: 0-100 的整数分数
     """
     client = OpenAI(
-        base_url="https://openrouter.ai/api/v1",
-        api_key="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",
+        base_url=base_url,
+        api_key=api_key,
     )
 
     prompt = """
@@ -128,7 +131,7 @@ def evaluate_question(triples_str, start_node, end_node, ref_question, gen_quest
 
     try:
         response = client.chat.completions.create(
-            model="openai/gpt-4o-mini",
+            model=model,
             messages=[
                 {"role": "system", "content": prompt},
                 {"role": "user", "content": user_content},
