@@ -1,9 +1,10 @@
 import json
 from openai import OpenAI
 
-base_url='https://openrouter.ai/api/v1'
-model='openai/gpt-4o-mini'
-api_key='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'
+base_url = 'https://openrouter.ai/api/v1'
+model = 'openai/gpt-4o-mini'
+api_key = ''
+
 
 def generate_question(path_str, start, end):
     client = OpenAI(
@@ -142,12 +143,16 @@ def evaluate_question(triples_str, start_node, end_node, ref_question, gen_quest
 
         result_text = response.choices[0].message.content
         result_json = json.loads(result_text)
-        return int(result_json.get("score", 0))
+
+        score = int(result_json.get("score", 0))
+        reason = str(result_json.get("reason", "No specific reason provided."))
+
+        return score, reason
 
     except Exception as e:
         print(f"[LLM Eval Error]: {e}")
         # 如果出错，返回 -1 或者 0，视情况而定
-        return 0
+        return 0, f"Error: {str(e)}"
 
 
 if __name__ == "__main__":
@@ -159,8 +164,6 @@ if __name__ == "__main__":
         )
     )
 
-
-
     triples = """
     (Xiaomi Phone, invented_by, Lei Jun)
     (Lei Jun, based_in, China)
@@ -169,7 +172,7 @@ if __name__ == "__main__":
     """
 
     # Case 1: 完美生成
-    score1 = evaluate_question(
+    score1, _ = evaluate_question(
         triples_str=triples,
         start_node="Xiaomi Phone",
         end_node="Beijing",
@@ -179,7 +182,7 @@ if __name__ == "__main__":
     print(f"Test Case 1 Score: {score1}")  # 应该接近 100 (虽然泄露了 Lei Jun，扣点分，但逻辑对)
 
     # Case 2: 错误生成 (答案泄露)
-    score2 = evaluate_question(
+    score2, _ = evaluate_question(
         triples_str=triples,
         start_node="Xiaomi Phone",
         end_node="Beijing",
