@@ -323,7 +323,7 @@ if __name__ == "__main__":
     parser.add_argument('--batch_size', type=int, default=256)
     parser.add_argument('--gnn_layers', type=int, default=3)
     parser.add_argument('--num_beams', type=int, default=4, help="Beam size for generation")
-    parser.add_argument('--llm_limit', type=int, default=100, help="Max samples for LLM eval (-1 for all)")
+    parser.add_argument('--llm_limit', type=int, default=200, help="Max samples for LLM eval (-1 for all)")
 
     args = parser.parse_args()
     evaluate_model(args)
