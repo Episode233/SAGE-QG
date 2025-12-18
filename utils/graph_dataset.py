@@ -2,6 +2,7 @@ import torch
 import json
 from torch.utils.data import Dataset
 from torch_geometric.data import Data, Batch
+from collections import deque, defaultdict # 引入 deque 做 BFS
 
 
 class ExpDataset(Dataset):
@@ -27,6 +28,61 @@ class ExpDataset(Dataset):
     def __len__(self):
         """返回数据集样本总数"""
         return len(self.data)
+
+    def _calculate_structure_info(self, nodes_text, edge_index_list):
+        """
+        [新增] 动态计算节点类型和跳数距离
+        输入:
+            nodes_text: list of str, e.g., ["[TOPIC] Obama", "Hawaii", ...]
+            edge_index_list: list of list, e.g., [[0, 1], [1, 2]] (注意这里输入原始列表，非Tensor)
+        输出:
+            node_types: list of int
+            hops: list of int
+        """
+        num_nodes = len(nodes_text)
+
+        # --- 1. 确定 Node Types ---
+        # 0: Topic (Start), 1: Ans (End), 2: Normal/Noise
+        node_types = [2] * num_nodes
+        start_node_idx = -1
+
+        for i, text in enumerate(nodes_text):
+            if "[TOPIC]" in text:
+                node_types[i] = 0
+                start_node_idx = i
+            elif "[ANS]" in text:
+                node_types[i] = 1
+
+        # --- 2. 确定 Hop Distance (BFS) ---
+        # 初始化所有距离为 9 (代表不可达或很远，embedding时会截断)
+        hops = [9] * num_nodes
+
+        if start_node_idx != -1:
+            # 构建邻接表 (Adjacency List) 用于 BFS
+            adj = defaultdict(list)
+            # edge_index_list[0] 是 source, edge_index_list[1] 是 target
+            src_list = edge_index_list[0]
+            tgt_list = edge_index_list[1]
+
+            for u, v in zip(src_list, tgt_list):
+                adj[u].append(v)
+
+            # 开始 BFS
+            queue = deque([(start_node_idx, 0)])  # (current_node, current_dist)
+            hops[start_node_idx] = 0
+            visited = {start_node_idx}
+
+            while queue:
+                curr, dist = queue.popleft()
+
+                # 遍历邻居
+                for neighbor in adj[curr]:
+                    if neighbor not in visited:
+                        visited.add(neighbor)
+                        hops[neighbor] = dist + 1
+                        queue.append((neighbor, dist + 1))
+
+        return node_types, hops
 
     def __getitem__(self, idx):
         """
@@ -73,13 +129,23 @@ class ExpDataset(Dataset):
         # 这样计算 Loss 时会自动忽略这些位置
         labels[labels == self.tokenizer.pad_token_id] = -100
 
-        # E. 组装成 PyG Data
+        # E. [新增] 结构信息计算 ---
+        # 注意：这里我们传入 item['edge_index'] (原始列表)，而不是转成 Tensor 后的
+        node_types_list, hops_list = self._calculate_structure_info(item['nodes'], item['edge_index'])
+
+        node_types = torch.tensor(node_types_list, dtype=torch.long)
+        hops = torch.tensor(hops_list, dtype=torch.long)
+
+        # F. 组装成 PyG Data
         data = Data(
             x=x_ids,  # 节点 Token IDs
             node_mask=x_mask,  # 节点 Mask
             edge_index=edge_index,  # 拓扑结构
             edge_attr=edge_attr,  # 关系 IDs
-            y=labels  # 目标问题 IDs
+            y=labels,   # 目标问题 IDs
+            # [新增字段]
+            node_type=node_types,   # [num_nodes]
+            hop_id=hops             # [num_nodes]
         )
 
         return data
