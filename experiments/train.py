@@ -29,6 +29,7 @@ def train(args):
     # ==========================================
     # 格式化时间: 20251217_1605 (自动补零对齐)
     timestamp = time.strftime("%Y%m%d_%H%M")
+    dir_name = f"{args.exp_name}_{args.dataset}_{timestamp}"
     run_name = f"train_{args.exp_name}_{args.dataset}_{timestamp}"
 
     # 初始化 WandB
@@ -49,7 +50,7 @@ def train(args):
     print(f">>> Using Device: {device}")
 
     # 创建结果目录 results/exp_name_timestamp
-    save_dir = os.path.join(project_root, "results", run_name)
+    save_dir = os.path.join(project_root, "results", dir_name)
     os.makedirs(save_dir, exist_ok=True)
     print(f">>> Results will be saved to: {save_dir}")
 
