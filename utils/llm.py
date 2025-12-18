@@ -152,7 +152,7 @@ def evaluate_question(triples_str, start_node, end_node, ref_question, gen_quest
     except Exception as e:
         print(f"[LLM Eval Error]: {e}")
         # 如果出错，返回 -1 或者 0，视情况而定
-        return 0, f"Error: {str(e)}"
+        return -1, f"Error: {str(e)}"
 
 
 if __name__ == "__main__":
