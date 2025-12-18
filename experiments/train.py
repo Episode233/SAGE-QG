@@ -92,6 +92,9 @@ def train(args):
     elif args.exp_name == 'b':
         from experiments.exp_b import ExpBModel
         model = ExpBModel(num_relations=num_relations, gnn_layers=args.gnn_layers, dropout=args.dropout)
+    elif args.exp_name == 'c':
+        from experiments.exp_c import ExpCModel
+        model = ExpCModel(num_relations=num_relations, gnn_layers=args.gnn_layers, dropout=args.dropout)
     else:
         raise ValueError(f"Unknown experiment: {args.exp_name}")
 
@@ -156,13 +159,22 @@ def train(args):
                 current_loss = loss.item() * args.grad_accum_steps
 
                 # 【WandB】记录 Train Loss 和 LR
-                wandb.log({
+                logs = {
                     "train/loss": current_loss,
                     "train/lr": optimizer.param_groups[0]['lr'],
                     "epoch": epoch + 1
-                })
+                }
 
-                pbar.set_postfix({'loss': f"{current_loss:.4f}"})
+                # 捞取 Alpha 统计信息 (如果是 ExpC)
+                if hasattr(model, 'alpha_stats') and model.alpha_stats:
+                    # model.alpha_stats 里的 key 已经是 "alpha/mean" 这种格式了
+                    logs.update(model.alpha_stats)
+                wandb.log(logs)
+
+                pbar_logs = {'loss': f"{current_loss:.4f}"}
+                if 'alpha/mean' in logs:
+                    pbar_logs['α'] = f"{logs['alpha/mean']:.3f}"
+                pbar.set_postfix(pbar_logs)
 
             total_train_loss += loss.item() * args.grad_accum_steps
 
