@@ -102,7 +102,7 @@ Fused = α * Graph + (1 - α) * Text
 
 **注入方式**：
 ```python
-x_struct = x_text + type_emb + hop_emb
+x_struct = torch.cat([x_text, v_type, v_hop], dim=-1)
 ```
 
 ## 📁 项目结构
