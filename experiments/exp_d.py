@@ -83,16 +83,16 @@ class ExpDModel(nn.Module):
         """
         # 1. 类型 Embedding
         # data.node_type: [N] -> [N, 768]
-        v_type = self.node_type_embedding(data.node_type)
+        x_type = self.node_type_embedding(data.node_type)
 
         # 2. 跳数 Embedding
         # 防止 BFS 算出来的距离超过 Embedding 表的大小
         hops = data.hop_id.clamp(max=self.max_hop_id)
-        v_hop = self.hop_embedding(hops)
+        x_hop = self.hop_embedding(hops)
 
         # 3. 拼接
         # x_struct 包含了: "字面意思" + "我是起点吗" + "我离起点多远"
-        x_struct = torch.cat([x_text, v_type, v_hop], dim=-1)
+        x_struct = torch.cat([x_text, x_type, x_hop], dim=-1)
 
         return self.struct_projection(x_struct)
 

@@ -101,9 +101,7 @@ Fused = α * Graph + (1 - α) * Text
 - **Hop Distance**：BFS 计算的跳数（0-9）
 
 **注入方式**：
-```python
-x_struct = torch.cat([x_text, v_type, v_hop], dim=-1)
-```
+$x_{struct}=\mathrm{Linear}(\mathrm{Concat}[x_{text},x_{type},x_{hop}])$
 
 ## 📁 项目结构
 
