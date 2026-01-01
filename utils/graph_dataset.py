@@ -31,29 +31,22 @@ class ExpDataset(Dataset):
 
     def _calculate_structure_info(self, nodes_text, edge_index_list):
         """
-        [新增] 动态计算节点类型和跳数距离
+        [新增] 动态计算跳数距离
         输入:
             nodes_text: list of str, e.g., ["[TOPIC] Obama", "Hawaii", ...]
             edge_index_list: list of list, e.g., [[0, 1], [1, 2]] (注意这里输入原始列表，非Tensor)
         输出:
-            node_types: list of int
             hops: list of int
         """
         num_nodes = len(nodes_text)
 
-        # --- 1. 确定 Node Types ---
-        # 0: Topic (Start), 1: Ans (End), 2: Normal/Noise
-        node_types = [2] * num_nodes
         start_node_idx = -1
 
         for i, text in enumerate(nodes_text):
             if "[TOPIC]" in text:
-                node_types[i] = 0
                 start_node_idx = i
-            elif "[ANS]" in text:
-                node_types[i] = 1
 
-        # --- 2. 确定 Hop Distance (BFS) ---
+        # --- 确定 Hop Distance (BFS) ---
         # 初始化所有距离为 9 (代表不可达或很远，embedding时会截断)
         hops = [9] * num_nodes
 
@@ -82,7 +75,7 @@ class ExpDataset(Dataset):
                         hops[neighbor] = dist + 1
                         queue.append((neighbor, dist + 1))
 
-        return node_types, hops
+        return hops
 
     def __getitem__(self, idx):
         """
@@ -131,9 +124,8 @@ class ExpDataset(Dataset):
 
         # E. [新增] 结构信息计算 ---
         # 注意：这里我们传入 item['edge_index'] (原始列表)，而不是转成 Tensor 后的
-        node_types_list, hops_list = self._calculate_structure_info(item['nodes'], item['edge_index'])
+        hops_list = self._calculate_structure_info(item['nodes'], item['edge_index'])
 
-        node_types = torch.tensor(node_types_list, dtype=torch.long)
         hops = torch.tensor(hops_list, dtype=torch.long)
 
         # F. 组装成 PyG Data
@@ -144,7 +136,6 @@ class ExpDataset(Dataset):
             edge_attr=edge_attr,  # 关系 IDs
             y=labels,   # 目标问题 IDs
             # [新增字段]
-            node_type=node_types,   # [num_nodes]
             hop_id=hops             # [num_nodes]
         )
 

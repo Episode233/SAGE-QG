@@ -20,11 +20,11 @@
 
 ## 🎯 项目简介
 
-SAGE-QG 是一个针对知识图谱的问题生成系统，旨在从给定的子图结构中生成自然、连贯且逻辑正确的多跳问题。本项目实现了四种不同的模型架构，通过对比实验验证了结构信息在问题生成任务中的重要性。
+SAGE-QG 是一个针对知识图谱的问题生成系统，旨在从给定的子图结构中生成自然、连贯且逻辑正确的多跳问题。本项目实现了四种不同的模型架构，通过对比实验验证了结构信息在复杂问题生成任务中的重要性。
 
 ### 主要创新点
 
-1. **结构感知编码**：将节点类型和跳数距离等拓扑信息注入到模型表示中
+1. **结构感知编码**：将跳数距离拓扑信息注入到模型表示中
 2. **自适应门控融合**：动态平衡语义特征和图结构特征的贡献度
 3. **LoRA高效微调**：使用参数高效的LoRA适配器微调BART模型
 4. **LLM辅助评估**：引入大语言模型作为裁判进行质量评分
@@ -59,7 +59,7 @@ graph TB
 | **ExpA** | GNN-Enhanced    | 纯图神经网络增强 | GAT + Relation Embedding |
 | **ExpB** | Pure BART       | 仅使用语言模型   | BART Baseline            |
 | **ExpC** | Gated Fusion    | 门控融合机制     | α * GNN + (1-α) * BART   |
-| **ExpD** | Structure-Aware | 结构信息注入     | Node Type + Hop Distance |
+| **ExpD** | Structure-Aware | 结构信息注入     | Hop Distance |
 
 ## 🔬 实验设计
 
@@ -94,14 +94,15 @@ Fused = α * Graph + (1 - α) * Text
 
 ### Experiment D: Structure-Aware Model（推荐）
 
-**核心思想**：在 ExpC 基础上注入结构信息（节点类型 + 跳数距离）。
+**核心思想**：在 ExpC 基础上注入结构信息（跳数距离）。
 
 **结构信息**：
-- **Node Type**：0=Topic（起点）, 1=Ans（终点）, 2=Other
 - **Hop Distance**：BFS 计算的跳数（0-9）
 
 **注入方式**：
-$x_{struct}=\mathrm{Linear}(\mathrm{Concat}[x_{text},x_{type},x_{hop}])$
+```python
+x_struct = x_text + x_hop
+```
 
 ## 📁 项目结构
 
@@ -382,7 +383,7 @@ results/<exp_name>_<dataset>_<timestamp>/
 
 2. **双向边处理**：所有边都会被复制为正向和反向（带 `_inv` 后缀），增强图连通性。
 
-3. **动态结构计算**：节点类型和跳数信息在数据加载时实时计算（BFS），无需预处理。
+3. **动态结构计算**：跳数信息在数据加载时实时计算（BFS），无需预处理。
 
 4. **Early Stopping**：使用验证集损失触发早停，避免过拟合。
 

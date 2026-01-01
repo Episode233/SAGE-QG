@@ -20,25 +20,12 @@ class ExpDModel(nn.Module):
         self.tokenizer, self.bart = get_bart_with_lora(lora_rank=8)
         self.d_model = self.bart.config.d_model
 
-        # --- A. 结构 Embeddings (ExpD 新增核心) ---
-        # 节点类型: 0=Topic, 1=Ans, 2=Other
-        self.node_type_embedding = nn.Embedding(3, self.d_model)
-
         # 跳数距离: 0, 1, 2... (预设最大支持 9 跳，足够了)
         # 如果 dataset 算出 >9，我们会在 forward 里截断
         self.max_hop_id = 9
         self.hop_embedding = nn.Embedding(self.max_hop_id + 1, self.d_model)
 
-        # 【新增】结构特征融合层 (Structure Fusion Layer)
-        # 输入维度是 3倍 d_model (Text + Type + Hop)
-        # 作用：强制将结构信息和语义信息在进入 GNN 前进行深度融合
-        self.struct_projection = nn.Sequential(
-            nn.Linear(self.d_model * 3, self.d_model),
-            nn.LayerNorm(self.d_model),  # LayerNorm 非常关键，拉齐不同来源向量的分布
-            nn.GELU()
-        )
-
-        # --- B. 图逻辑流组件 ---
+        # --- A. 图逻辑流组件 ---
         self.relation_embedding = nn.Embedding(num_relations, self.d_model)
         self.gnn_layers = nn.ModuleList()
         for _ in range(gnn_layers):
@@ -53,13 +40,13 @@ class ExpDModel(nn.Module):
                 )
             )
 
-        # --- C. 融合门控 (同 ExpC) ---
+        # --- B. 融合门控 (同 ExpC) ---
         self.gate_net = nn.Sequential(
             nn.Linear(self.d_model * 2, 1),
             nn.Sigmoid()
         )
 
-        # --- D. 适配层 ---
+        # --- C. 适配层 ---
         self.projection = nn.Sequential(
             nn.Linear(self.d_model, self.d_model),
             nn.LayerNorm(self.d_model),
@@ -81,20 +68,16 @@ class ExpDModel(nn.Module):
         """
         ExpD 核心逻辑: 将结构信息注入到语义向量中
         """
-        # 1. 类型 Embedding
-        # data.node_type: [N] -> [N, 768]
-        x_type = self.node_type_embedding(data.node_type)
 
-        # 2. 跳数 Embedding
+        # 1. 跳数 Embedding
         # 防止 BFS 算出来的距离超过 Embedding 表的大小
-        hops = data.hop_id.clamp(max=self.max_hop_id)
-        x_hop = self.hop_embedding(hops)
+        x_hop = self.hop_embedding(data.hop_id.clamp(max=self.max_hop_id))
 
-        # 3. 拼接
-        # x_struct 包含了: "字面意思" + "我是起点吗" + "我离起点多远"
-        x_struct = torch.cat([x_text, x_type, x_hop], dim=-1)
+        # 2. 注入 (相加)
+        # x_struct 包含了: "字面意思" + "我离起点多远"
+        x_struct = x_text + x_hop
 
-        return self.struct_projection(x_struct)
+        return x_struct
 
     def forward(self, data):
         # 1. 纯语义流 (Semantic Stream)
