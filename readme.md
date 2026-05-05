@@ -20,7 +20,7 @@
 
 ## 🎯 项目简介
 
-SAGE-QG 是一个针对知识图谱的问题生成系统，旨在从给定的子图结构中生成自然、连贯且逻辑正确的多跳问题。本项目实现了四种不同的模型架构，通过对比实验验证了结构信息在复杂问题生成任务中的重要性。
+SAGE-QG 是一个针对知识图谱的问题生成系统，旨在从给定的子图结构中生成自然、连贯且逻辑正确的多跳问题。本项目实现了四种可训练模型架构，并提供 API-based LLM Baseline，用于对比验证结构信息在复杂问题生成任务中的重要性。
 
 ### 主要创新点
 
@@ -35,6 +35,7 @@ SAGE-QG 是一个针对知识图谱的问题生成系统，旨在从给定的子
 - **灵活的跳数配置**：支持 2-hop 和 3-hop 推理路径生成
 - **噪声注入机制**：自动添加干扰节点增强模型鲁棒性
 - **完整的实验追踪**：集成 WandB 进行训练监控和可视化
+- **LLM Baseline 对比**：支持直接调用大语言模型基于子图上下文生成问题
 - **多维度评估**：BLEU, ROUGE, METEOR, BERTScore, Distinct-N, LLM-Judge
 
 ## 🏗️ 系统架构
@@ -54,14 +55,23 @@ graph TB
 
 ### 模型架构对比
 
-| 实验     | 模型名称        | 核心特点         | 关键组件                 |
-| -------- | --------------- | ---------------- | ------------------------ |
-| **ExpA** | GNN-Enhanced    | 纯图神经网络增强 | GAT + Relation Embedding |
-| **ExpB** | Pure BART       | 仅使用语言模型   | BART Baseline            |
-| **ExpC** | Gated Fusion    | 门控融合机制     | α * GNN + (1-α) * BART   |
-| **ExpD** | Structure-Aware | 结构信息注入     | Hop Distance |
+| 实验         | 模型名称        | 核心特点             | 关键组件                 |
+| ------------ | --------------- | -------------------- | ------------------------ |
+| **LLM Base** | LLM Baseline    | 直接基于子图提示生成 | GPT-4o-mini / OpenRouter |
+| **ExpA**     | GNN-Enhanced    | 纯图神经网络增强     | GAT + Relation Embedding |
+| **ExpB**     | Pure BART       | 仅使用语言模型       | BART Baseline            |
+| **ExpC**     | Gated Fusion    | 门控融合机制         | α * GNN + (1-α) * BART   |
+| **ExpD**     | Structure-Aware | 结构信息注入         | Hop Distance             |
 
 ## 🔬 实验设计
+
+### LLM Baseline: API-based Question Generation
+
+**核心思想**：不训练本地模型，直接将测试样本中的子图三元组、主题实体和答案实体组织为提示词，调用 LLM 生成问题。
+
+**设计目的**：作为强生成基线，衡量专门微调模型相对于通用大语言模型的效果、成本和稳定性。
+
+**实现位置**：`experiments/baseline.py` 调用 `utils.llm.generate_baseline_question` 生成问题，并复用自动指标与 LLM-Judge 进行评估。
 
 ### Experiment A: GNN-Enhanced Model
 
@@ -115,6 +125,7 @@ qg/
 ├── experiments/
 │   ├── train.py                 # 训练主脚本
 │   ├── eval.py                  # 评估主脚本
+│   ├── baseline.py              # LLM Baseline 评估脚本
 │   ├── exp_a.py                 # 实验 A：GNN 增强
 │   ├── exp_b.py                 # 实验 B：BART 基线
 │   ├── exp_c.py                 # 实验 C：门控融合
@@ -161,7 +172,7 @@ pandas
 
 # 数据处理
 networkx
-openai  # 用于 LLM 评估
+openai  # 用于 LLM Baseline 与 LLM 评估
 tqdm
 ```
 
@@ -238,6 +249,8 @@ python utils/build_vocab.py -d WC2014_mix
 ```
 
 ## 🏋️ 模型训练
+
+以下命令适用于 ExpA-ExpD 四个可训练模型；LLM Baseline 不需要训练，直接在测试集上调用 API 生成并评估。
 
 ### 基础训练命令
 
@@ -358,6 +371,20 @@ python experiments/eval.py \
     --num_beams 4 \
     --llm_limit 200
 ```
+
+### LLM Baseline 评估
+
+LLM Baseline 直接读取 `datasets/mixed/<dataset>/test`，调用 `utils.llm.generate_baseline_question` 生成问题，然后计算 BLEU、ROUGE、METEOR、BERTScore、Distinct-N 和 LLM-Judge。
+
+```bash
+# 评估完整测试集
+python experiments/baseline.py -d PQ_mix
+
+# 仅评估前 200 条样本，适合调试或控制 API 成本
+python experiments/baseline.py -d PQ_mix --llm_limit 200
+```
+
+运行前需要在 `utils/llm.py` 中配置 OpenRouter/OpenAI API Key。结果会保存到 `results/eval_baseline_<dataset>_<timestamp>/`。
 
 ### 输出结果
 
